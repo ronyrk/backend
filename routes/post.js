@@ -5,7 +5,7 @@ const Post = require('../model/post.model')
 const Comment = require('../model/comment.model')
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer')
-const shortId = require("shortId")
+// const shortId = require("shortId")
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const storage = new CloudinaryStorage({
@@ -13,7 +13,7 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'fbpost',
     format: async (req, file) => 'png', // supports promises as well
-    public_id: (req, file) =>shortId.generate()+'-'+file.originalname,
+    public_id: (req, file) =>file.originalname,
   },
 });
    
