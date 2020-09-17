@@ -22,7 +22,7 @@ app.use('/post', require('./routes/post'))
 app.use('/comment', require('./routes/comment'))
 
 app.get('/',(req,res)=>{
-    res.json({message:"works"})
+    res.json({message:"workss"})
 })
 mongoose.connect(process.env.DB_URL,{ useNewUrlParser: true ,useUnifiedTopology: true },()=>{
     console.log('DB connected');
