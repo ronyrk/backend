@@ -54,6 +54,14 @@ const userSchema = new mongoose.Schema({
     date:{
         type: Date,
         default: Date.now
+    },
+    profileimg:{
+        type:String,
+        default:''
+    },
+    coverimg:{
+        type:String,
+        default:""
     } 
 
 })

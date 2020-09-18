@@ -3,8 +3,26 @@ const route = express.Router()
 const User = require('../model/auth.model')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const {usersignin} = require('../middleware/auth.middleware')
+const Post = require('../model/post.model')
 const registerValidator = require('../validator/signupValidator')
 const signinValidator = require('../validator/signinValidator')
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer')
+const { v4: uuidv4 } = require('uuid');
+ 
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'fbpost',
+    format: async (req, file) => 'png', // supports promises as well
+    public_id: (req, file) =>uuidv4()+"-"+file.originalname,
+  },
+});
+   
+  var upload = multer({ storage: storage })
 
 route.post('/signup', (req, res)=>{
     const {first, last, email, password,confirm} = req.body
@@ -77,13 +95,15 @@ route.post('/signin', (req,res)=>{
                     first: user.first,
                     last: user.last,
                     email: user.email,
+                    
+                    
                 }
                 jwt.sign(userdetails, process.env.JWT_SECRET,(err,token)=>{
                     if(err){
                         return res.status(400).json({error: 'server error'})
                     }
                     
-                    res.status(200).json({token,user:userdetails,success: true})
+                    res.status(200).json({token,user:userdetails,profileimg:user.profileimg,success: true})
                 })
             })
         })
@@ -91,6 +111,48 @@ route.post('/signin', (req,res)=>{
     }
 
 
+})
+
+
+route.put('/profileimg',usersignin,upload.single('profileimg'),(req,res)=>{
+    const file = req.file
+    User.findByIdAndUpdate(req.user._id,{$set:{profileimg:file.path}},{new:true})
+    .select('-password')
+    .then(user=>{
+        let newpost = new Post({
+            post:'',user: user._id, image:user.profileimg,activity:'Updated profile photo'
+        })
+        newpost.save()
+        Post.populate(newpost,{path:"user",select:"_id first last email"})
+        .then(post=>{
+            res.status(200).json({post,user:user})
+        })
+    })
+})
+
+
+route.put('/coverimg',usersignin,upload.single('coverimg'),(req,res)=>{
+    const file = req.file
+    User.findByIdAndUpdate(req.user._id,{$set:{coverimg:file.path}},{new:true})
+    .select('-password')
+    .then(user=>{
+        let newpost = new Post({
+            post:'',user: user._id, image:user.coverimg,activity:'Updated cover photo'
+        })
+        newpost.save()
+        Post.populate(newpost,{path:"user",select:"_id first last email"})
+        .then(post=>{
+            res.status(200).json({post,user:user})
+        })
+    })
+})
+
+route.get('/profile',usersignin,(req,res)=>{
+    User.findById(req.user._id)
+    .select('-password')
+    .then(user=>{
+        res.status(200).json({user})
+    })
 })
 
 module.exports = route

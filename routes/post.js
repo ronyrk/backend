@@ -5,7 +5,7 @@ const Post = require('../model/post.model')
 const Comment = require('../model/comment.model')
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer')
-// const shortId = require("shortId")
+const { v4: uuidv4 } = require('uuid');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const storage = new CloudinaryStorage({
@@ -13,12 +13,29 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'fbpost',
     format: async (req, file) => 'png', // supports promises as well
-    public_id: (req, file) =>file.originalname,
+    public_id: (req, file) =>uuidv4()+"-"+file.originalname,
   },
 });
    
   var upload = multer({ storage: storage })
 
+
+  route.get('/mypost',usersignin,(req,res)=>{
+        Post.find({user:req.user._id})
+        .sort("-date")
+        .populate('user', 'first last _id profileimg')
+        .populate({
+        path: "comment",
+        populate:{
+            path:"commentedby",
+            model:"User",
+            select:"_id first last email"
+        }
+        })
+        .then(post=>{
+            res.status(200).json({post,id:req.user._id})
+        })
+    })
 route.post('/create',usersignin,upload.array('postimg'),(req,res)=>{
     const {post} = req.body
     let imagearray = []
@@ -30,7 +47,7 @@ route.post('/create',usersignin,upload.array('postimg'),(req,res)=>{
     })
 
     newpost.save()
-    Post.populate(newpost,{path:"user",select:"first last _id"})
+    Post.populate(newpost,{path:"user",select:"first last _id profileimg"})
     .then(post=>{
         res.status(200).json({post})
     })
@@ -40,7 +57,7 @@ route.post('/create',usersignin,upload.array('postimg'),(req,res)=>{
 route.get('/get',(req, res)=>{
     Post.find()
     .sort("-date")
-    .populate('user', 'first last _id')
+    .populate('user', 'first last _id profileimg')
     .populate({
         path: "comment",
         populate:{
@@ -117,5 +134,8 @@ route.patch('/delete/:postid',usersignin,(req,res)=>{
 
     })
 })
+
+
+
 
 module.exports = route
