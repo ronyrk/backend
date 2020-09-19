@@ -63,7 +63,7 @@ route.get('/get',(req, res)=>{
         populate:{
             path:"commentedby",
             model:"User",
-            select:"_id first last email"
+            select:"_id first last email profileimg"
         }
     })
     .then(post=>{

@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         default:""
     },
+    address:{
+        type: String,
+        default:""
+    },
     about:{
         type: String,
         default:""
@@ -49,7 +53,7 @@ const userSchema = new mongoose.Schema({
     },
     dateofbirth:{
         type: String,
-        default:""
+        default: Date.now
     },
     date:{
         type: Date,
@@ -62,7 +66,15 @@ const userSchema = new mongoose.Schema({
     coverimg:{
         type:String,
         default:""
-    } 
+    },
+    friends:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User"
+    }],
+    requests:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User"
+    }]
 
 })
 

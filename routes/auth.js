@@ -155,4 +155,83 @@ route.get('/profile',usersignin,(req,res)=>{
     })
 })
 
+
+route.get('/get',usersignin,(req,res)=>{
+    User.find({_id:{$ne:req.user._id},friends:{$ne:req.user._id},requests:{$ne:req.user._id}})
+    .select('_id first last email profileimg')
+    .then(user=>{
+
+        User.findById(req.user._id)
+        .populate('requests','_id first last email profileimg')
+        .then(me=>{
+            
+               let userarray = [...user]
+               let myarry = [...me.requests]
+               const result = userarray.filter(({_id})=>!myarry.some(x=>x._id == _id))
+               res.status(200).json({user})
+        })
+        
+    })
+})
+
+route.put('/addfriend/:friendid',usersignin,(req,res)=>{
+    User.findByIdAndUpdate(req.params.friendid,{$push:{requests:req.user._id}},{new:true})
+    .select('_id first last email profileimg')
+    .then(user=>{
+        res.status(200).json({user})
+    })
+})
+
+route.get('/getfriends',usersignin,(req, res)=>{
+    User.findById(req.user._id)
+    .populate('friends','_id first last email profileimg')
+    .then(user=>{
+        res.status(200).json({friends:user.friends})
+    })
+})
+
+route.get('/getrequests',usersignin,(req, res)=>{
+    User.findById(req.user._id)
+    .populate('requests','_id first last email profileimg ')
+    .then(user=>{
+        res.status(200).json({requests:user.requests})
+    })
+})
+
+route.get('/followings',usersignin,(req, res)=>{
+    User.find({requests:{$in:[req.user._id]}})
+    .select('_id first last email profileimg ')
+    .then(user=>{
+        res.status(200).json({followings:user})
+    })
+})
+
+route.put('/confirmfriend/:friendid',usersignin,(req,res)=>{
+    User.findByIdAndUpdate(req.params.friendid,{$push:{friends:req.user._id}},{new:true})
+    .then(frnd=>{
+        User.findByIdAndUpdate(req.user._id,{$push:{friends:frnd._id},$pull:{requests:frnd._id}},{new:true})
+        .then(me=>{
+            res.status(200).json({_id:frnd._id})
+        })
+    })
+})
+
+route.put('/unfriend/:friendid',usersignin,(req,res)=>{
+    User.findByIdAndUpdate(req.params.friendid,{$pull:{friends:req.user._id}},{new:true})
+    .then(frnd=>{
+        User.findByIdAndUpdate(req.user._id,{$pull:{friends:frnd._id}},{new:true})
+        .then(me=>{
+            res.status(200).json({_id:frnd._id})
+        })
+    })
+})
+
+route.put('/cancelreq/:friendid',usersignin,(req,res)=>{
+    User.findByIdAndUpdate(req.params.friendid,{$pull:{requests:req.user._id}},{new:true})
+    .then(frnd=>{
+        res.status(200).json({_id:frnd._id})
+    })
+})
+
+
 module.exports = route
