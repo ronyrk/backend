@@ -2,6 +2,7 @@ const express = require('express')
 const route = express.Router()
 const {usersignin} = require('../middleware/auth.middleware')
 const Post = require('../model/post.model')
+const User = require('../model/auth.model')
 const Comment = require('../model/comment.model')
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer')
@@ -135,7 +136,27 @@ route.patch('/delete/:postid',usersignin,(req,res)=>{
     })
 })
 
-
+route.get('/userprofile/:userid',(req,res)=>{
+   User.findById(req.params.userid)
+   .select('-password')
+   .then(u=>{
+       Post.find({user:req.params.userid})
+       .sort("-date")
+       .populate('user', 'first last _id profileimg')
+       .populate({
+        path: "comment",
+        populate:{
+            path:"commentedby",
+            model:"User",
+            select:"_id first last email profileimg"
+        }
+    })
+       .then(post=>{
+        res.status(200).json({user:u,post})
+       })
+    
+   })
+})
 
 
 module.exports = route

@@ -234,4 +234,25 @@ route.put('/cancelreq/:friendid',usersignin,(req,res)=>{
 })
 
 
+route.put('/update',usersignin,(req,res)=>{
+    let setobj={
+        first:req.body.first,
+        last:req.body.last,
+        about:req.body.about,
+        address:req.body.address,
+        gender:req.body.gender,
+        city:req.body.city,
+        country:req.body.country,
+        state:req.body.state,
+        dateofbirth:req.body.dateofbirth,
+        zipcode:req.body.zipcode
+    }
+    User.findByIdAndUpdate(req.user._id,{$set:setobj},{new:true})
+    .select('-password')
+    .then(user=>{
+        res.status(200).json({user,message:"saved successfully"})
+    })
+
+})
+
 module.exports = route
