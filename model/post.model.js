@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const arrayUniquePlugin = require("mongoose-unique-array")
 
 const postSchema = new mongoose.Schema({
     post: {
@@ -9,6 +8,19 @@ const postSchema = new mongoose.Schema({
     activity:{
         type: String,
         trim: true,
+    },
+    posttype:{
+        type:String,
+        default:"general"
+    },
+    group:{
+        status:{type:Boolean,default:false},
+        name:{ type:mongoose.Schema.Types.ObjectId,ref:"Group"},
+        category:{type:String,default:""}       
+    },
+    link:{
+        status:{type:Boolean,default:false},
+        name:{ type:String,default:""}
     },
     user:{
         type:mongoose.Schema.Types.ObjectId,
