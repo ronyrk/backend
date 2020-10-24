@@ -240,8 +240,19 @@ route.get('/get',(req, res)=>{
 
 
 
-route.get('/groppost/:groupid',(req, res)=>{
-    Post.find({"group.status":true,"group.name":req.params.groupid})
+route.get('/grouppost/:groupid',(req, res)=>{
+    console.log(req.query.category);
+    let query = {
+        "group.status":true,
+        "group.name":req.params.groupid
+    }
+    if(req.query.category == 'All'){
+        query={...query}
+    }else if(req.query.category){
+        query["group.category"] = req.query.category
+    }
+
+    Post.find(query)
     .sort("-date")
     .populate('user', 'first last _id profileimg')
     .populate('group.name','name slug')
