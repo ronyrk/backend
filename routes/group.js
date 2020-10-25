@@ -9,13 +9,14 @@ const { v4: uuidv4 } = require('uuid');
  
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const Group = require('../model/group.model');
+const Post = require('../model/post.model');
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'groups',
-    format: async (req, file) => 'png', // supports promises as well
-    public_id: (req, file) =>uuidv4()+"-"+file.originalname,
+    //folder: 'groups',
+    //format: async (req, file) => 'png', // supports promises as well
+    //public_id: (req, file) =>uuidv4()+"-"+file.originalname,
   },
 });
 
@@ -278,6 +279,56 @@ route.put('/leave/:groupid',usersignin,(req,res)=>{
       return res.status(404).json({error:"You already joined"})
       
     }
+  })
+})
+
+
+
+route.patch('/delete/:groupid',usersignin,(req,res)=>{
+  Group.findOne({_id:req.params.groupid,creator:req.user._id})
+  .then(group=>{
+    if(!group){
+      return res.status(404).json({error:"Something went wrong"})
+    }
+    Post.find({"group.status":true,"group.name":group._id})
+    .then(post=>{
+      let allimagesid = []
+      let postids = []
+      post.map(p=>{
+        postids.push(p._id)
+        p.image.map(img=>{
+          let id = img.split('/').pop()
+          allimagesid.push((id.split('.')[0]));
+        })
+        
+      })
+
+      if(group.groupimg){
+        let id = group.groupimg.split('/').pop()
+        allimagesid.push((id.split('.')[0]));
+
+      }
+
+      if(group.groupcover){
+        let id = group.groupcover.split('/').pop()
+        allimagesid.push((id.split('.')[0]));
+
+      }
+
+       group.deleteOne()
+       .then(gdelete=>{
+          Post.deleteMany({_id: { $in: postids}})
+          .then(pdelete=>{
+            cloudinary.api.delete_resources(allimagesid,function(error, result) {
+              console.log(result);
+              res.status(200).json({success:true})
+          });
+          })
+       })
+     
+
+    
+    })
   })
 })
 

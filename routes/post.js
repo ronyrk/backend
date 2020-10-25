@@ -14,9 +14,9 @@ var validate = require('url-validator')
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'fbpost',
-    format: async (req, file) => 'png', // supports promises as well
-    public_id: (req, file) =>uuidv4()+"-"+file.originalname,
+    //folder: 'fbpost',
+    //format: async (req, file) => 'png', // supports promises as well
+    //public_id: (req, file) =>uuidv4()+"-"+file.originalname,
   },
 });
    
@@ -42,6 +42,7 @@ const storage = new CloudinaryStorage({
     })
 route.post('/create',usersignin,upload.array('postimg'),(req,res)=>{
     const {post} = req.body
+   
     let imagearray = []
     req.files.map(file=>{
         imagearray.push(file.path)
@@ -241,7 +242,7 @@ route.get('/get',(req, res)=>{
 
 
 route.get('/grouppost/:groupid',(req, res)=>{
-    console.log(req.query.category);
+   
     let query = {
         "group.status":true,
         "group.name":req.params.groupid
@@ -321,18 +322,33 @@ route.patch('/delete/:postid',usersignin,(req,res)=>{
     Post.findById(req.params.postid)
     .populate('user',"_id")
     .then(post=>{
-        if(post.user._id == req.user._id){
-            let commentarray = post.comment
-        Comment.deleteMany({_id:{$in:commentarray}})
-        .then(data=>{
-            Post.findByIdAndDelete(req.params.postid)
-            .then(post=>{
-                res.status(200).json({success:true})
-            })
-        })
-        }else{
-            res.status(400).json({error:"not authorized"})
-        }
+         if(post.user._id == req.user._id){
+             let commentarray = post.comment
+         Comment.deleteMany({_id:{$in:commentarray}})
+         .then(data=>{
+             Post.findByIdAndDelete(req.params.postid)
+             .then(postdelete=>{
+                 if( post.image.length >0){
+                    let ids = []
+                    post.image.map(img=>{
+                        let id = img.split('/').pop()
+                        ids.push((id.split('.')[0]));
+                    })
+                    
+            
+                    cloudinary.api.delete_resources(ids,function(error, result) {
+                        res.status(200).json({success:true})
+                    });
+                 }else if(post.image.length == 0){
+                    res.status(200).json({success:true})
+                 }
+                
+                
+             })
+         })
+         }else{
+             res.status(400).json({error:"not authorized"})
+         }
         
     })
 })

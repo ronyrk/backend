@@ -40,7 +40,7 @@ app.use('/group', require('./routes/group'))
 app.get('/',(req,res)=>{
     res.json({message:"workss"})
 })
-mongoose.connect(process.env.DB_URL,{ useNewUrlParser: true ,useUnifiedTopology: true },()=>{
+mongoose.connect(process.env.DB_URL,{useCreateIndex: true, useNewUrlParser: true ,useUnifiedTopology: true },()=>{
     console.log('DB connected');
 })
 

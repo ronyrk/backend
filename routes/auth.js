@@ -16,9 +16,9 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'fbpost',
-    format: async (req, file) => 'png', // supports promises as well
-    public_id: (req, file) =>uuidv4()+"-"+file.originalname,
+    //folder: 'fbpost',
+    //format: async (req, file) => 'png', // supports promises as well
+    //public_id: (req, file) =>uuidv4()+"-"+file.originalname,
   },
 });
    
