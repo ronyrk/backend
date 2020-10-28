@@ -5,11 +5,13 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const {usersignin} = require('../middleware/auth.middleware')
 const Post = require('../model/post.model')
+const Group = require('../model/group.model')
 const registerValidator = require('../validator/signupValidator')
 const signinValidator = require('../validator/signinValidator')
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer')
 const { v4: uuidv4 } = require('uuid');
+const validator = require('validator')
  
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
@@ -41,7 +43,7 @@ route.post('/signup', (req, res)=>{
             bcrypt.genSalt(10, (err, salt)=>{
                 bcrypt.hash(password, salt, (err, hash)=>{
                     const newUser = new User({
-                        first, last, email, password : hash
+                        first, last, email, password : hash, username:uuidv4()
                     })
         
                     newUser.save()
@@ -238,21 +240,146 @@ route.put('/update',usersignin,(req,res)=>{
     let setobj={
         first:req.body.first,
         last:req.body.last,
-        about:req.body.about,
-        address:req.body.address,
+        bio:req.body.bio,
         gender:req.body.gender,
         city:req.body.city,
         country:req.body.country,
         state:req.body.state,
         dateofbirth:req.body.dateofbirth,
-        zipcode:req.body.zipcode
+        email:req.body.email,
+        username:req.body.username
     }
-    User.findByIdAndUpdate(req.user._id,{$set:setobj},{new:true})
-    .select('-password')
-    .then(user=>{
-        res.status(200).json({user,message:"saved successfully"})
+
+    if (!req.body.email) {
+        return res.status(404).json({error:"Please provide your email"})
+        
+    } else if (!validator.isEmail(req.body.email)) {
+        return res.status(404).json({error:"Invalid email"})
+  
+    }
+    if (!req.body.username) {
+        return res.status(404).json({error:"Username can't be empty"})
+        
+    } 
+    
+
+    User.findOne({email:req.body.email})
+    .then(useremail=>{
+        if(useremail && (useremail._id != req.user._id)){
+           return res.status(404).json({error:"Email already taken"})
+        }
+        User.findOne({username:req.body.username})
+        .then(username=>{
+            if(username && (username._id != req.user._id)){
+                return res.status(404).json({error:"Username is not available, try another"})
+             }
+
+             User.findByIdAndUpdate(req.user._id,{$set:setobj},{new:true})
+            .select('-password')
+            .then(user=>{
+                res.status(200).json({user,message:"saved successfully"})
+            })
+        })
     })
+    
 
 })
 
+//password change api
+route.patch('/changepassword',usersignin,(req,res)=>{
+    const {currentpassword, newpassword, confirmpassword} = req.body
+    if(!currentpassword){
+        return res.status(400).json({error: 'please provide current password'})
+    }
+     if(!newpassword){
+        return res.status(400).json({error: 'please provide new password'})
+     }else if(newpassword.length < 6){
+        return res.status(400).json({error: 'password should not be less then six letter'})
+     }
+
+     if(!confirmpassword){
+        return res.status(400).json({error: 'please provide confirm password'})
+     }else if(newpassword !== confirmpassword){
+        return res.status(400).json({error: 'confirm password did not matched'})
+     }
+
+        User.findById(req.user._id)
+        .then(user=>{
+            bcrypt.compare(currentpassword, user.password,(err, result)=>{
+                if(err){
+                   return res.status(400).json({error: 'something went wrong, try again'})
+                }
+                if(!result){
+                   return res.status(400).json({ error: 'Password invalid' })
+                }
+        
+        
+        
+                bcrypt.genSalt(10, (err, salt)=>{
+                    bcrypt.hash(newpassword, salt, (err, hash)=>{
+                       
+                        User.findByIdAndUpdate(user._id,{$set:{password:hash}},{new:true})
+                        .then(newuser=>{
+                            res.status(200).json({message:"password changed successfuly"})
+                        })
+                    
+                    })
+                })
+        
+        
+            })
+        })
+    
+})
+
+
+route.delete('/delete',usersignin,(req,res)=>{
+    User.findById(req.user._id)
+    .then(user=>{
+        let images = []
+        let posts = []
+
+        Post.find({user:user._id})
+        .then(userpost=>{
+            userpost.map(p=>{
+                
+                posts.push(p._id)
+                p.image.map(img=>{
+                    let id = img.split('/').pop()
+                    images.push((id.split('.')[0]));
+                })
+            })
+
+
+
+            if(user.profileimg){
+                let id = user.profileimg.split('/').pop()
+                images.push((id.split('.')[0]));
+        
+              }
+        
+              if(user.coverimg){
+                let id = user.coverimg.split('/').pop()
+                images.push((id.split('.')[0]));
+        
+              }
+
+              user.deleteOne()
+              .then(udelete=>{
+                 Post.deleteMany({_id: { $in: posts}})
+                 .then(pdelete=>{
+                   cloudinary.api.delete_resources(images,function(error, result) {
+                     console.log(result);
+                     res.status(200).json({success:true})
+                 });
+                 })
+              })
+              
+
+            
+        })
+
+        
+    })
+})
 module.exports = route

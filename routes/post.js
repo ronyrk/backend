@@ -10,7 +10,7 @@ const multer = require('multer')
 const { v4: uuidv4 } = require('uuid');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 var validate = require('url-validator')
-
+var ObjectId = require('mongoose').Types.ObjectId
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -26,7 +26,7 @@ const storage = new CloudinaryStorage({
   route.get('/mypost',usersignin,(req,res)=>{
         Post.find({user:req.user._id})
         .sort("-date")
-        .populate('user', 'first last _id profileimg')
+        .populate('user', 'first last _id profileimg username')
         .populate('group.name','name slug')
         .populate({
         path: "comment",
@@ -201,7 +201,7 @@ route.post('/:groupid/picture/create',usersignin,upload.array('postimg'),(req,re
         }
         if(group.members.includes(req.user._id)){
             newpost.save()
-            Post.populate(newpost,{path:"user",select:"first last _id profileimg"})
+            Post.populate(newpost,{path:"user",select:"first last _id profileimg username"})
             .then(post=>{
                 res.status(200).json({post})
             })
@@ -224,7 +224,7 @@ route.post('/:groupid/picture/create',usersignin,upload.array('postimg'),(req,re
 route.get('/get',(req, res)=>{
     Post.find()
     .sort("-date")
-    .populate('user', 'first last _id profileimg')
+    .populate('user', 'first last _id profileimg username')
     .populate('group.name')
     .populate({
         path: "comment",
@@ -235,6 +235,31 @@ route.get('/get',(req, res)=>{
         }
     })
     .then(post=>{
+        res.status(200).json({post})
+    })
+})
+
+route.get('/singlepost/:postid',(req, res)=>{
+    console.log(ObjectId.isValid(req.params.postid));
+    if(ObjectId.isValid(req.params.postid) === false){
+        return res.status(404).json({error:true})
+    }
+    Post.findById(req.params.postid)
+    .sort("-date")
+    .populate('user', 'first last _id profileimg username')
+    .populate('group.name')
+    .populate({
+        path: "comment",
+        populate:{
+            path:"commentedby",
+            model:"User",
+            select:"_id first last email profileimg"
+        }
+    })
+    .then(post=>{
+        if(!post){
+            return res.status(404).json({error:true})
+        }
         res.status(200).json({post})
     })
 })
@@ -255,7 +280,7 @@ route.get('/grouppost/:groupid',(req, res)=>{
 
     Post.find(query)
     .sort("-date")
-    .populate('user', 'first last _id profileimg')
+    .populate('user', 'first last _id profileimg username')
     .populate('group.name','name slug')
     .populate({
         path: "comment",
@@ -291,6 +316,7 @@ if(req.params.react === 'like'){
         }else{
             Post.findOneAndUpdate({_id:req.params.id},{$push:{like:req.user._id}},{new:true})
             .populate('group.name',"name slug")
+            .populate('user','_id first last username profileimg')
             .then(post=>{
                 res.status(200).json({post})
             })
@@ -305,6 +331,7 @@ if(req.params.react === 'like'){
             if(confirm){
                 Post.findOneAndUpdate({_id:req.params.id},{$pull:{like:req.user._id}},{new:true})
                 .populate('group.name',"name slug")
+                .populate('user','_id first last username profileimg')
                 .then(post=>{
                     res.status(200).json({post})
                 })
@@ -353,13 +380,17 @@ route.patch('/delete/:postid',usersignin,(req,res)=>{
     })
 })
 
-route.get('/userprofile/:userid',(req,res)=>{
-   User.findById(req.params.userid)
+route.get('/userprofile/:usernameorid',(req,res)=>{
+    //console.log(new ObjectId(req.params.usernameorid));
+   User.findOne({username:req.params.usernameorid})
    .select('-password')
    .then(u=>{
-       Post.find({user:req.params.userid})
+       if(!u){
+           return res.status(404).json({error:"Profile not found"})
+       }
+       Post.find({user:u._id})
        .sort("-date")
-       .populate('user', 'first last _id profileimg')
+       .populate('user', '-password')
        .populate('group.name','name slug')
        .populate({
         path: "comment",
