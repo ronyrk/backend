@@ -43,7 +43,16 @@ route.post('/create',usersignin,(req,res)=>{
 })
 
 route.get('/getall',(req,res)=>{
+ 
   Group.find()
+  .then(group=>{
+    res.status(200).json({group})
+  })
+})
+
+route.get('/joined',usersignin,(req,res)=>{
+ 
+  Group.find({members:req.user._id})
   .then(group=>{
     res.status(200).json({group})
   })

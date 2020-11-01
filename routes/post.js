@@ -24,7 +24,7 @@ const storage = new CloudinaryStorage({
 
 
   route.get('/mypost',usersignin,(req,res)=>{
-        Post.find({user:req.user._id})
+        Post.find({user:req.user._id,"group.status":false})
         .sort("-date")
         .populate('user', 'first last _id profileimg username')
         .populate('group.name','name slug')
@@ -388,7 +388,7 @@ route.get('/userprofile/:usernameorid',(req,res)=>{
        if(!u){
            return res.status(404).json({error:"Profile not found"})
        }
-       Post.find({user:u._id})
+       Post.find({user:u._id,"group.status":false})
        .sort("-date")
        .populate('user', '-password')
        .populate('group.name','name slug')
