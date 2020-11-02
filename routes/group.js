@@ -25,12 +25,29 @@ var upload = multer({ storage: storage })
 
 
 route.get("/trendinggroup",(req,res)=>{
-  Group.find({})
-  .sort({'members':-1})
-  .limit(5)
-  .then(groups=>{
-    res.status(200).json({groups})
-  })
+
+Group.aggregate([
+  {"$project":{
+    "name":1,
+    "slug":1,
+    "groupimg":1,
+    "members":1,
+    "length":{"$size":"$members"}
+  }},
+  {"$sort":{"length":-1}},
+  {"$limit":5}
+],
+function (err,result) {
+  res.status(200).json({groups:result})
+}
+)
+
+  // Group.find({})
+  // .sort({'members.$size':1})
+  // .limit(5)
+  // .then(groups=>{
+  //   res.status(200).json({groups})
+  // })
 })
 
 
