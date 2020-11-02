@@ -24,6 +24,15 @@ var upload = multer({ storage: storage })
 
 
 
+route.get("/trendinggroup",(req,res)=>{
+  Group.find({})
+  .sort({'members':-1})
+  .limit(5)
+  .then(groups=>{
+    res.status(200).json({groups})
+  })
+})
+
 
 
 route.post('/create',usersignin,(req,res)=>{
@@ -329,7 +338,7 @@ route.patch('/delete/:groupid',usersignin,(req,res)=>{
           Post.deleteMany({_id: { $in: postids}})
           .then(pdelete=>{
             cloudinary.api.delete_resources(allimagesid,function(error, result) {
-              console.log(result);
+            
               res.status(200).json({success:true})
           });
           })
@@ -340,5 +349,10 @@ route.patch('/delete/:groupid',usersignin,(req,res)=>{
     })
   })
 })
+
+
+
+
+
 
 module.exports = route
