@@ -226,6 +226,7 @@ route.get('/get',(req, res)=>{
     .sort("-date")
     .populate('user', 'first last _id profileimg username')
     .populate('group.name')
+    .limit(20)
     .populate({
         path: "comment",
         populate:{

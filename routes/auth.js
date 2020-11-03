@@ -152,6 +152,7 @@ route.put('/coverimg',usersignin,upload.single('coverimg'),(req,res)=>{
 route.get('/profile',usersignin,(req,res)=>{
     User.findById(req.user._id)
     .select('-password')
+    .populate("pinnedgroups","name slug groupimg _id")
     .then(user=>{
         res.status(200).json({user})
     })
@@ -381,5 +382,32 @@ route.delete('/delete',usersignin,(req,res)=>{
 
         
     })
+})
+
+
+route.put("/setpinnedgroup/:groupid",usersignin,(req,res)=>{
+    User.findById(req.user._id)
+    .then(user=>{
+        let pinnedGroup = user.pinnedgroups
+        
+        if(pinnedGroup.includes(req.params.groupid)){
+            User.findByIdAndUpdate(req.user._id,{$pull:{pinnedgroups:req.params.groupid}},{new:true})
+            .select('-password')
+            .populate("pinnedgroups","name slug groupimg _id")
+            .then(u=>{
+                res.status(200).json({user:u})
+            })
+        }else{
+             User.findByIdAndUpdate(req.user._id,{$push:{pinnedgroups:req.params.groupid}},{new:true})
+             .select('-password')
+             .populate("pinnedgroups","name slug groupimg _id")
+            .then(u=>{
+                res.status(200).json({user:u})
+            })
+        }
+
+
+    })
+
 })
 module.exports = route

@@ -80,6 +80,10 @@ const userSchema = new mongoose.Schema({
     requests:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:"User"
+    }],
+    pinnedgroups:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Group"
     }]
 
 })
