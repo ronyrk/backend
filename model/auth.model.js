@@ -58,8 +58,8 @@ const userSchema = new mongoose.Schema({
         default:""
     },
     dateofbirth:{
-        type: String,
-        default: Date.now
+        dateandmonth:{date:{type:String,default:"1"},month:{type:String,default:"january"},privacy:{type:String,default:"public"}},
+        birthyear:{year:{type:String,default:"1999"},privacy:{type:String,default:"public"}}
     },
     date:{
         type: Date,
