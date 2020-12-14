@@ -36,6 +36,9 @@ app.use('/user', require('./routes/auth'))
 app.use('/post', require('./routes/post'))
 app.use('/comment', require('./routes/comment'))
 app.use('/group', require('./routes/group'))
+app.use('/blogcategory', require('./routes/blogCategory'))
+app.use('/blog', require('./routes/blog'))
+app.use('/article', require('./routes/article'))
 
 app.get('/',(req,res)=>{
     res.json({message:"workss"})
