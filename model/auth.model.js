@@ -84,7 +84,12 @@ const userSchema = new mongoose.Schema({
     pinnedgroups:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Group"
-    }]
+    }],
+    role: {
+        type: String,
+        enum: ["user", "admin"],
+        default: "user",
+      },
 
 })
 

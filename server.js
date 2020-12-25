@@ -39,6 +39,7 @@ app.use('/group', require('./routes/group'))
 app.use('/blogcategory', require('./routes/blogCategory'))
 app.use('/blog', require('./routes/blog'))
 app.use('/article', require('./routes/article'))
+app.use('/admin', require('./routes/admin'))
 
 app.get('/',(req,res)=>{
     res.json({message:"workss"})

@@ -45,7 +45,7 @@ const articleSchema = new mongoose.Schema({
   },
   isApproved:{
     type:Boolean,
-    default:true
+    default:false
   },
   views:{
       type:Number,

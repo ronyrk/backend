@@ -57,14 +57,43 @@ route.post("/create", usersignin, upload.single('thumbnail'), (req, res) => {
 
     })
 
-    _article.save()
-        .then(blog => {
-            res.status(201).json({ sucess: true, blog })
+    if(blog){
+        Blog.findById(blog.trim())
+        .then(foundBlog=>{
+            console.log(foundBlog)
+            console.log(blog.trim())
+            
+            if(foundBlog && foundBlog.creator != req.user._id){
+                return res.status(400).json({error:"You are not authorized"})
+            }
+            _article.save()
+            Article.populate(_article,{path:"blog"})
+            .then(blog => {
+                res.status(201).json({ sucess: true, blog })
+            })
+            .catch(err => {
+                
+                res.status(400).json({ error: "something went wrong" })
+            })
         })
         .catch(err => {
-            console.log(err)
+        
             res.status(400).json({ error: "something went wrong" })
         })
+    }else{
+        _article.save()
+            .then(blog => {
+                res.status(201).json({ sucess: true, blog })
+            })
+            .catch(err => {
+               
+                res.status(400).json({ error: "something went wrong" })
+            }) 
+    }
+
+   
+
+    
 })
 
 
@@ -98,18 +127,18 @@ route.get('/recentarticle', (req, res) => {
         blogCategory.findOne({slug:category})
         .then(cat=>{
             console.log(cat._id)
-            fetch({category:cat._id})
+            fetch({category:cat._id,isApproved:true})
         })
         
     }else{
-        fetch({})
+        fetch({isApproved:true})
     }
     
     
 })
 
 route.get('/single/:slug', (req, res) => {
-    Article.findOne({ slug: req.params.slug })
+    Article.findOne({ slug: req.params.slug,isApproved:true })
         .populate("category", "name slug _id")
         .populate("creator", "first last _id email username profileimg")
         .then(article => {
@@ -158,7 +187,7 @@ route.post('/relatedarticles', (req, res) => {
     const { tags, _id } = req.body
     console.log(tags,_id)
     Article.find(
-        { "tags": { $in:tags[0] !== '' ? tags:[] }, "_id": { $ne: ObjectId.isValid(_id) ? _id : undefined } })
+        { "tags": { $in:tags[0] !== '' ? tags:[] }, "_id": { $ne: ObjectId.isValid(_id) ? _id : undefined },isApproved:tre })
         .limit(3)
         .populate("category", "name slug _id")
         .populate("creator", "first last _id email username profileimg")

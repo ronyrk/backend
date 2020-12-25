@@ -72,6 +72,26 @@ route.post('/signup', (req, res)=>{
 })
 
 
+route.post('/verify',(req,res)=>{
+    if (req.headers.authorization) {
+    const token = req.headers.authorization;
+    jwt.verify(token, process.env.JWT_SECRET, function (err, user) {
+      if (err) {
+        return res.status(401).json({ error: "token expired or invalid" });
+      }
+
+      User.findById(user._id)
+        .select("-password")
+        .then((user) => {
+          return res.status(200).json({ success: true, user });
+        });
+    });
+  } else {
+    return res.status(401).json({ error: "Authorization required" });
+  }
+})
+
+
 route.post('/signin', (req,res)=>{
     const {email, password} = req.body
     const login = signinValidator(email, password)
@@ -97,6 +117,7 @@ route.post('/signin', (req,res)=>{
                     first: user.first,
                     last: user.last,
                     email: user.email,
+                    role:user.role
                     
                     
                 }
