@@ -222,11 +222,24 @@ route.post('/:groupid/picture/create',usersignin,upload.array('postimg'),(req,re
 
 
 route.get('/get',(req, res)=>{
-    Post.find()
+    let options = {}
+    if(req.query.query != 'undefined'){
+        var regex = new RegExp(req.query.query, "i")
+        options.post = regex
+    }
+    const pageOptions = {
+        page: parseInt(req.query.page, 10) || 0,
+        limit: parseInt(req.query.limit, 10) || 15
+    }
+    console.log(pageOptions)
+    console.log(pageOptions)
+
+    Post.find(options)
     .sort("-date")
     .populate('user', 'first last _id profileimg username')
     .populate('group.name')
-    .limit(20)
+    .skip(pageOptions.page * pageOptions.limit)
+    .limit(pageOptions.limit)
     .populate({
         path: "comment",
         populate:{
