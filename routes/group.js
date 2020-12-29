@@ -35,7 +35,7 @@ Group.aggregate([
     "length":{"$size":"$members"}
   }},
   {"$sort":{"length":-1}},
-  {"$limit":5}
+  {"$limit":3}
 ],
 function (err,result) {
   res.status(200).json({groups:result})
