@@ -54,6 +54,18 @@ const articleSchema = new mongoose.Schema({
 
 },{timestamps:true})
 
+articleSchema.index({
+    title:"text",
+    description:"text",
+    body:"text"
+},{
+    weights:{
+        title:5,
+        description:2,
+        body:1
+    }
+})
+
 
 const Article = mongoose.model('Article', articleSchema)
 module.exports = Article

@@ -105,7 +105,7 @@ route.get('/recentarticle', (req, res) => {
         .populate("category", "name slug _id")
         .populate("creator", "first last _id email username profileimg")
         .sort("-createdAt")
-        .limit(6)
+        .limit(8)
         .then(article => {
             Article.find(cat)
                 .populate("category", "name slug _id")
@@ -171,6 +171,7 @@ route.patch('/updateview/:slug', (req, res) => {
     Article.findOneAndUpdate({ slug: req.params.slug }, { $inc: { views: 1 } }, { new: true })
         .populate("category", "name slug _id")
         .populate("creator", "first last _id email username profileimg")
+        .populate("blog")
         .then(article => {
             if (!article) {
                 return res.status(400).json({ error: "article not found" })
@@ -187,12 +188,36 @@ route.post('/relatedarticles', (req, res) => {
     const { tags, _id } = req.body
     console.log(tags,_id)
     Article.find(
-        { "tags": { $in:tags[0] !== '' ? tags:[] }, "_id": { $ne: ObjectId.isValid(_id) ? _id : undefined },isApproved:tre })
+        { "tags": { $in:tags[0] !== '' ? tags:[] }, "_id": { $ne: ObjectId.isValid(_id) ? _id : undefined },isApproved:true })
         .limit(3)
         .populate("category", "name slug _id")
         .populate("creator", "first last _id email username profileimg")
         .then((article) => {
 
+            res.status(200).json({ sucess: true, article })
+        })
+        .catch(err => {
+            console.log(err)
+            res.status(400).json({ error: "something went wrong" })
+        })
+
+})
+
+route.get("/search",(req,res)=>{
+    let query = {}
+    let text = req.query.search || ''
+  
+    if (text.length) {
+      query["$text"] = { $search: text }
+    }
+
+    console.log(query)
+
+    Article.find(query)
+    .populate("category", "name slug _id")
+        .populate("creator", "first last _id email username profileimg")
+        .populate("blog")
+        .then(article => {
             res.status(200).json({ sucess: true, article })
         })
         .catch(err => {

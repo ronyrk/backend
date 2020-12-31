@@ -67,6 +67,7 @@ route.delete('/delete/:categoryid',usersignin,admin,(req,res)=>{
 
 route.get('/getcategory',(req,res)=>{
     blogCategory.find()
+    .sort("name")
     .then(category=>{
         res.status(201).json({
             success:true,
