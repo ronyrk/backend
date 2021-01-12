@@ -101,6 +101,7 @@ route.get('/single/:slug',(req,res)=>{
 
 route.get('/allblogs',(req,res)=>{
     Blog.find()
+    .populate('creator','first last')
     .then(blog=>{
         res.status(200).json({sucess:true,blog})
     })

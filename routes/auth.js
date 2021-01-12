@@ -75,14 +75,23 @@ route.post('/signup', (req, res)=>{
 route.post('/verify',(req,res)=>{
     if (req.headers.authorization) {
     const token = req.headers.authorization;
+    console.log(token)
+    if(token == 'undefined'){
+        return res.status(401).json({ message: "no token" });
+    }
     jwt.verify(token, process.env.JWT_SECRET, function (err, user) {
       if (err) {
         return res.status(401).json({ error: "token expired or invalid" });
       }
+    
 
       User.findById(user._id)
         .select("-password")
+        .populate("pinnedgroups","name slug groupimg _id")
         .then((user) => {
+            if(user.isSuspended){
+                return res.status(400).json({error:"You are temporary suspended"})
+            }
           return res.status(200).json({ success: true, user });
         });
     });
@@ -104,6 +113,10 @@ route.post('/signin', (req,res)=>{
             if(!user){
                 return res.status(400).json({error: 'User not found'})
             }
+
+            if(user.isSuspended){
+                return res.status(400).json({error:"You are temporary suspended"})
+            }
             bcrypt.compare(password, user.password,(err, result)=>{
                 if(err){
                    return res.status(400).json({error: 'Email or Password invalid'})
@@ -117,7 +130,8 @@ route.post('/signin', (req,res)=>{
                     first: user.first,
                     last: user.last,
                     email: user.email,
-                    role:user.role
+                    role:user.role,
+                    isSuspended:user.isSuspended
                     
                     
                 }
@@ -126,7 +140,7 @@ route.post('/signin', (req,res)=>{
                         return res.status(400).json({error: 'server error'})
                     }
                     
-                    res.status(200).json({token,user:userdetails,profileimg:user.profileimg,success: true})
+                    res.status(200).json({token,user:user,profileimg:user.profileimg,success: true})
                 })
             })
         })

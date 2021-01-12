@@ -43,7 +43,9 @@ route.post("/create", usersignin, upload.single('thumbnail'), (req, res) => {
         creator: req.user._id,
         title,
         description,
-        slug: slugify(title + "-" + shortid.generate()),
+        slug: slugify(title + "-" + shortid.generate(),{
+            locale:"bn"
+        }),
         relatedArticle: {
             article1: article1 || "",
             article2: article2 || "",
