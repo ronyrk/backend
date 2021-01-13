@@ -6,28 +6,18 @@ const app = express()
 const cors = require('cors')
 app.use(cors())
 const server = require('http').createServer(app)
-// const io = require("socket.io")(server, {
-//     handlePreflightRequest: (req, res) => {
-//         const headers = {
-//             "Access-Control-Allow-Headers": "Content-Type, Authorization",
-//             "Access-Control-Allow-Origin": 'http://localhost:5000', //or the specific origin you want to give access to,
-//             "Access-Control-Allow-Credentials": true
-//         };
-//         res.writeHead(200, headers);
-//         res.end();
-//     }
-// });
+
 
 
 const path = require('path')
 const cloudinary = require('cloudinary').v2;
 
-cloudinary.config({ 
-    cloud_name: process.env.CLOUD_NAME, 
-    api_key: process.env.CLOUD_API_KEY, 
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
     api_secret: process.env.CLOUD_API_SECRET
-  });
-   
+});
+
 app.use(express.json())
 
 app.use(express.urlencoded({ extended: false }))
@@ -41,10 +31,10 @@ app.use('/blog', require('./routes/blog'))
 app.use('/article', require('./routes/article'))
 app.use('/admin', require('./routes/admin'))
 
-app.get('/',(req,res)=>{
-    res.json({message:"workss"})
+app.get('/', (req, res) => {
+    res.json({ message: "server is running..." })
 })
-mongoose.connect(process.env.DB_URL,{useCreateIndex: true, useNewUrlParser: true ,useUnifiedTopology: true },()=>{
+mongoose.connect(process.env.DB_URL, { useCreateIndex: true, useNewUrlParser: true, useUnifiedTopology: true }, () => {
     console.log('DB connected');
 })
 
@@ -56,6 +46,6 @@ mongoose.connect(process.env.DB_URL,{useCreateIndex: true, useNewUrlParser: true
 //     })
 // })
 
-server.listen(process.env.PORT || 5000,(req,res)=>{
+server.listen(process.env.PORT || 5000, (req, res) => {
     console.log('server started');
 })

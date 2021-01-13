@@ -19,7 +19,7 @@ const storage = new CloudinaryStorage({
 
 var upload = multer({ storage: storage })
 
-
+//---------------------------------------------------------------------------------------------------------------
 route.post("/create", usersignin, upload.single('thumbnail'), (req, res) => {
     const { title, category, description, body, article1, article2, article3, blog, tags } = req.body
 
@@ -43,8 +43,8 @@ route.post("/create", usersignin, upload.single('thumbnail'), (req, res) => {
         creator: req.user._id,
         title,
         description,
-        slug: slugify(title + "-" + shortid.generate(),{
-            locale:"bn"
+        slug: slugify(title + "-" + shortid.generate(), {
+            locale: "bn"
         }),
         relatedArticle: {
             article1: article1 || "",
@@ -59,88 +59,76 @@ route.post("/create", usersignin, upload.single('thumbnail'), (req, res) => {
 
     })
 
-    if(blog){
+    if (blog) {
         Blog.findById(blog.trim())
-        .then(foundBlog=>{
-            console.log(foundBlog)
-            console.log(blog.trim())
-            
-            if(foundBlog && foundBlog.creator != req.user._id){
-                return res.status(400).json({error:"You are not authorized"})
-            }
-            _article.save()
-            Article.populate(_article,{path:"blog"})
-            .then(blog => {
-                res.status(201).json({ sucess: true, blog })
+            .then(foundBlog => {
+                if (foundBlog && foundBlog.creator != req.user._id) {
+                    return res.status(400).json({ error: "You are not authorized" })
+                }
+                _article.save()
+                Article.populate(_article, { path: "blog" })
+                    .then(blog => {
+                        res.status(201).json({ sucess: true, blog })
+                    })
+                    .catch(err => {
+
+                        res.status(400).json({ error: "something went wrong" })
+                    })
             })
             .catch(err => {
-                
                 res.status(400).json({ error: "something went wrong" })
             })
-        })
-        .catch(err => {
-        
-            res.status(400).json({ error: "something went wrong" })
-        })
-    }else{
+    } else {
         _article.save()
             .then(blog => {
                 res.status(201).json({ sucess: true, blog })
             })
             .catch(err => {
-               
+
                 res.status(400).json({ error: "something went wrong" })
-            }) 
+            })
     }
-
-   
-
-    
 })
 
-
+//---------------------------------------------------------------------------------------------------------------
 route.get('/recentarticle', (req, res) => {
     let category = req.query.category
 
-    const fetch=(cat)=>{
+    const fetch = (cat) => {
         Article.find(cat)
-        .populate("category", "name slug _id")
-        .populate("creator", "first last _id email username profileimg")
-        .sort("-createdAt")
-        .limit(8)
-        .then(article => {
-            Article.find(cat)
-                .populate("category", "name slug _id")
-                .populate("creator", "first last _id email username profileimg")
-                .sort("-views")
-                .limit(8)
-                .then(popular => {
-                    res.status(200).json({ sucess: true, article, popular })
-                })
+            .populate("category", "name slug _id")
+            .populate("creator", "first last _id email username profileimg")
+            .sort("-createdAt")
+            .limit(8)
+            .then(article => {
+                Article.find(cat)
+                    .populate("category", "name slug _id")
+                    .populate("creator", "first last _id email username profileimg")
+                    .sort("-views")
+                    .limit(8)
+                    .then(popular => {
+                        res.status(200).json({ sucess: true, article, popular })
+                    })
 
-        })
-        .catch(err => {
-            console.log(err)
-            res.status(400).json({ error: "something went wrong" })
-        })
+            })
+            .catch(err => {
+                res.status(400).json({ error: "something went wrong" })
+            })
     }
-    
-    if(category){
-        blogCategory.findOne({slug:category})
-        .then(cat=>{
-            console.log(cat._id)
-            fetch({category:cat._id,isApproved:true})
-        })
-        
-    }else{
-        fetch({isApproved:true})
+
+    if (category) {
+        blogCategory.findOne({ slug: category })
+            .then(cat => {
+                fetch({ category: cat._id, isApproved: true })
+            })
+    } else {
+        fetch({ isApproved: true })
     }
-    
-    
 })
 
+//---------------------------------------------------------------------------------------------------------------
 route.get('/single/:slug', (req, res) => {
-    Article.findOne({ slug: req.params.slug,isApproved:true })
+    Article.findOne({ slug: req.params.slug, isApproved: true })
         .populate("category", "name slug _id")
         .populate("creator", "first last _id email username profileimg")
         .then(article => {
@@ -164,6 +152,7 @@ route.get('/single/:slug', (req, res) => {
 //         })
 // })
 
+//---------------------------------------------------------------------------------------------------------------
 route.post("/articleimages", upload.single("articleimages"), (req, res) => {
     const file = req.file
     return res.status(200).json({ imgUrl: file.path })
@@ -181,16 +170,15 @@ route.patch('/updateview/:slug', (req, res) => {
             res.status(200).json({ sucess: true, article })
         })
         .catch(err => {
-            console.log(err)
             res.status(400).json({ error: "something went wrong" })
         })
 })
 
+//---------------------------------------------------------------------------------------------------------------
 route.post('/relatedarticles', (req, res) => {
     const { tags, _id } = req.body
-    console.log(tags,_id)
     Article.find(
-        { "tags": { $in:tags[0] !== '' ? tags:[] }, "_id": { $ne: ObjectId.isValid(_id) ? _id : undefined },isApproved:true })
+        { "tags": { $in: tags[0] !== '' ? tags : [] }, "_id": { $ne: ObjectId.isValid(_id) ? _id : undefined }, isApproved: true })
         .limit(3)
         .populate("category", "name slug _id")
         .populate("creator", "first last _id email username profileimg")
@@ -199,34 +187,29 @@ route.post('/relatedarticles', (req, res) => {
             res.status(200).json({ sucess: true, article })
         })
         .catch(err => {
-            console.log(err)
             res.status(400).json({ error: "something went wrong" })
         })
-
 })
 
-route.get("/search",(req,res)=>{
+//---------------------------------------------------------------------------------------------------------------
+route.get("/search", (req, res) => {
     let query = {}
     let text = req.query.search || ''
-  
+
     if (text.length) {
-      query["$text"] = { $search: text }
+        query["$text"] = { $search: text }
     }
 
-    console.log(query)
-
     Article.find(query)
-    .populate("category", "name slug _id")
+        .populate("category", "name slug _id")
         .populate("creator", "first last _id email username profileimg")
         .populate("blog")
         .then(article => {
             res.status(200).json({ sucess: true, article })
         })
         .catch(err => {
-            console.log(err)
             res.status(400).json({ error: "something went wrong" })
         })
-
 })
 
 module.exports = route
